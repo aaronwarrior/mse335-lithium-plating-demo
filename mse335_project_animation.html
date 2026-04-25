@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MSE 335 Final Project: Lithium Intercalation vs Lithium Plating</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: rgba(15, 23, 42, 0.92);
+      --panel2: rgba(30, 41, 59, 0.82);
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --line: rgba(148, 163, 184, 0.28);
+      --green: #22c55e;
+      --blue: #38bdf8;
+      --purple: #a78bfa;
+      --red: #fb7185;
+      --orange: #f59e0b;
+      --yellow: #facc15;
+      --white: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 32rem),
+        radial-gradient(circle at 80% 10%, rgba(167, 139, 250, 0.16), transparent 30rem),
+        linear-gradient(135deg, #020617 0%, var(--bg) 52%, #111827 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 42px 22px 22px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      background: rgba(56, 189, 248, 0.10);
+      color: #bae6fd;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+    }
+
+    h1 {
+      font-size: clamp(34px, 6vw, 68px);
+      line-height: 0.96;
+      margin: 22px 0 14px;
+      max-width: 980px;
+      letter-spacing: -0.06em;
+    }
+
+    .subtitle {
+      max-width: 860px;
+      color: var(--muted);
+      font-size: clamp(16px, 2.2vw, 21px);
+      line-height: 1.55;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 18px 22px 60px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+      overflow: hidden;
+    }
+
+    .card-inner { padding: 22px; }
+
+    .controls {
+      position: sticky;
+      top: 18px;
+    }
+
+    .control-group {
+      margin: 18px 0 20px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .control-group:last-child { border-bottom: none; }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: baseline;
+      font-size: 14px;
+      color: #cbd5e1;
+      margin-bottom: 10px;
+    }
+
+    .value {
+      color: var(--white);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--blue);
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      background: rgba(148, 163, 184, 0.10);
+      color: #cbd5e1;
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .pill:hover, .pill.active {
+      border-color: rgba(56, 189, 248, 0.75);
+      background: rgba(56, 189, 248, 0.18);
+      color: #e0f2fe;
+    }
+
+    .viz-card { min-height: 670px; }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(15, 23, 42, 0.58);
+      overflow-x: auto;
+    }
+
+    .tab {
+      border: 1px solid var(--line);
+      background: rgba(30, 41, 59, 0.8);
+      color: #cbd5e1;
+      border-radius: 999px;
+      padding: 10px 14px;
+      cursor: pointer;
+      white-space: nowrap;
+      font-size: 14px;
+      transition: 0.2s;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, rgba(56,189,248,0.28), rgba(167,139,250,0.25));
+      border-color: rgba(56, 189, 248, 0.65);
+      color: white;
+    }
+
+    .scene {
+      display: none;
+      padding: 20px;
+    }
+
+    .scene.active { display: block; }
+
+    .scene-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: start;
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.03em;
+    }
+
+    .explain {
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+      max-width: 740px;
+      font-size: 15px;
+    }
+
+    .status {
+      min-width: 190px;
+      text-align: right;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .status strong {
+      display: block;
+      color: white;
+      font-size: 20px;
+      margin-top: 3px;
+    }
+
+    .canvas-wrap {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.55), rgba(2, 6, 23, 0.45));
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 12px;
+      overflow: hidden;
+    }
+
+    canvas, svg {
+      width: 100%;
+      display: block;
+      border-radius: 16px;
+      background: rgba(2, 6, 23, 0.45);
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .metric {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 13px;
+    }
+
+    .metric .k {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .metric .v {
+      font-size: 20px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .equation-box {
+      margin-top: 12px;
+      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      color: #dbeafe;
+      line-height: 1.65;
+      font-size: 15px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      color: #cbd5e1;
+      font-size: 13px;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      margin-top: 12px;
+    }
+
+    .callout {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(250, 204, 21, 0.28);
+      background: rgba(250, 204, 21, 0.08);
+      color: #fef3c7;
+      line-height: 1.5;
+    }
+
+    button.play {
+      border: 0;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      color: white;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-weight: 800;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+      box-shadow: 0 12px 34px rgba(56, 189, 248, 0.22);
+    }
+
+    @media (max-width: 950px) {
+      .grid { grid-template-columns: 1fr; }
+      .controls { position: static; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .two-col { grid-template-columns: 1fr; }
+      .scene-title { flex-direction: column; }
+      .status { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="badge">⚡ Interactive MSE 335 model demo</div>
+    <h1>Why fast charging can shift graphite from intercalation to lithium plating</h1>
+    <p class="subtitle">
+      This single-page animation illustrates a reduced-order single-particle model idea: lithium arrives at the graphite surface, diffuses inward, and may plate if the surface becomes too crowded under high current, low temperature, or slow diffusion.
+    </p>
+  </header>
+
+  <main class="grid">
+    <aside class="card controls">
+      <div class="card-inner">
+        <h2>Model sliders</h2>
+        <p class="explain">Move the inputs and watch the particle, concentration profile, and safe/unsafe map respond.</p>
+
+        <div class="control-group">
+          <label>C-rate <span class="value" id="crateVal">2.0 C</span></label>
+          <input id="crate" type="range" min="0.2" max="6" step="0.1" value="2" />
+          <div class="pill-row">
+            <button class="pill" data-set="gentle">Gentle charge</button>
+            <button class="pill active" data-set="baseline">Baseline</button>
+            <button class="pill" data-set="aggressive">Aggressive charge</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Temperature <span class="value" id="tempVal">298 K</span></label>
+          <input id="temp" type="range" min="260" max="330" step="1" value="298" />
+        </div>
+
+        <div class="control-group">
+          <label>Particle radius <span class="value" id="radiusVal">5.9 μm</span></label>
+          <input id="radius" type="range" min="2" max="12" step="0.1" value="5.9" />
+        </div>
+
+        <div class="control-group">
+          <label>Diffusivity factor <span class="value" id="diffVal">1.0×</span></label>
+          <input id="diffFactor" type="range" min="0.1" max="10" step="0.1" value="1" />
+        </div>
+
+        <div class="control-group">
+          <label>Initial SOC <span class="value" id="socVal">25%</span></label>
+          <input id="soc" type="range" min="5" max="80" step="1" value="25" />
+        </div>
+
+        <button class="play" id="playBtn">Pause animation</button>
+
+        <div class="callout" id="mainConclusion">
+          Surface concentration is moderate. Intercalation is favored, but fast charging can still push the surface toward plating.
+        </div>
+
+        <p class="note">
+          This is a teaching visualization, not a full battery design tool. The equations are simplified to show trends clearly.
+        </p>
+      </div>
+    </aside>
+
+    <section class="card viz-card">
+      <div class="tabs">
+        <button class="tab active" data-tab="particle">1. Particle animation</button>
+        <button class="tab" data-tab="profile">2. Diffusion profile</button>
+        <button class="tab" data-tab="map">3. Safe charging map</button>
+        <button class="tab" data-tab="equations">4. Equation story</button>
+      </div>
+
+      <div class="scene active" id="particle">
+        <div class="scene-title">
+          <div>
+            <h2>Lithium arrival, intercalation, and plating competition</h2>
+            <p class="explain">Blue ions arrive from the electrolyte. Green ions successfully intercalate into graphite. Red ions represent lithium that is more likely to plate when the surface fills faster than diffusion can move lithium inward.</p>
+          </div>
+          <div class="status">Predicted regime<strong id="regimeText">Intercalation-dominated</strong></div>
+        </div>
+        <div class="canvas-wrap"><canvas id="particleCanvas" width="900" height="470"></canvas></div>
+        <div class="legend">
+          <span><i class="dot" style="background: var(--blue)"></i> arriving Li⁺</span>
+          <span><i class="dot" style="background: var(--green)"></i> intercalated Li</span>
+          <span><i class="dot" style="background: var(--red)"></i> plating risk</span>
+          <span><i class="dot" style="background: #64748b"></i> graphite particle</span>
+        </div>
+        <div class="metrics">
+          <div class="metric"><div class="k">Surface concentration</div><div class="v" id="surfMetric">62%</div></div>
+          <div class="metric"><div class="k">Average SOC</div><div class="v" id="avgMetric">37%</div></div>
+          <div class="metric"><div class="k">Diffusion time scale</div><div class="v" id="tauMetric">5.5 h</div></div>
+          <div class="metric"><div class="k">Plating risk index</div><div class="v" id="riskMetric">0.42</div></div>
+        </div>
+      </div>
+
+      <div class="scene" id="profile">
+        <div class="scene-title">
+          <div>
+            <h2>Surface buildup from finite solid-state diffusion</h2>
+            <p class="explain">The main idea is not just “how much lithium enters,” but where it sits. During fast charging, the surface can become lithium-rich before the particle interior catches up.</p>
+          </div>
+          <div class="status">Gradient severity<strong id="gradientText">Moderate</strong></div>
+        </div>
+        <div class="canvas-wrap"><canvas id="profileCanvas" width="900" height="470"></canvas></div>
+        <div class="metrics">
+          <div class="metric"><div class="k">cₛ,surf / cₛ,max</div><div class="v" id="csurfMetric">0.62</div></div>
+          <div class="metric"><div class="k">cₛ,avg / cₛ,max</div><div class="v" id="cavgMetric">0.37</div></div>
+          <div class="metric"><div class="k">surface - center</div><div class="v" id="gradMetric">0.31</div></div>
+          <div class="metric"><div class="k">normalized flux</div><div class="v" id="fluxMetric">2.0</div></div>
+        </div>
+      </div>
+
+      <div class="scene" id="map">
+        <div class="scene-title">
+          <div>
+            <h2>Safe / plating-prone operating map</h2>
+            <p class="explain">Lower temperature reduces effective diffusion. Higher C-rate increases lithium arrival flux. The result is a kinetic map: some regions remain intercalation-dominated, while others become plating-prone.</p>
+          </div>
+          <div class="status">Current point<strong id="mapText">Watch region</strong></div>
+        </div>
+        <div class="canvas-wrap"><canvas id="mapCanvas" width="900" height="470"></canvas></div>
+        <div class="legend">
+          <span><i class="dot" style="background: rgba(34,197,94,0.95)"></i> safer intercalation</span>
+          <span><i class="dot" style="background: rgba(250,204,21,0.95)"></i> transition zone</span>
+          <span><i class="dot" style="background: rgba(251,113,133,0.95)"></i> plating-prone</span>
+        </div>
+      </div>
+
+      <div class="scene" id="equations">
+        <div class="scene-title">
+          <div>
+            <h2>The equation story in plain language</h2>
+            <p class="explain">This section connects the animation to the reduced-order single-particle model used in the project.</p>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="equation-box">
+            <b>1. Diffusion inside a spherical graphite particle</b><br />
+            ∂cₛ/∂t = Dₛ · (1/r²) ∂/∂r (r² ∂cₛ/∂r)<br /><br />
+            Larger Dₛ or smaller Rₚ lets lithium spread inward faster, lowering surface buildup.
+          </div>
+          <div class="equation-box">
+            <b>2. Applied current becomes surface flux</b><br />
+            Nₛ ∝ i<sub>app</sub> / F<br /><br />
+            Increasing C-rate means lithium arrives faster at the particle surface.
+          </div>
+          <div class="equation-box">
+            <b>3. Diffusion time scale</b><br />
+            τ<sub>diff</sub> = Rₚ² / Dₛ<br /><br />
+            When the charge time is shorter than this diffusion time scale, concentration gradients become large.
+          </div>
+          <div class="equation-box">
+            <b>4. Simplified plating rule</b><br />
+            plating risk ↑ when cₛ,surf → cₛ,max and flux remains high<br /><br />
+            In the visualization, risk is based on C-rate, temperature-corrected diffusivity, radius, and initial SOC.
+          </div>
+        </div>
+        <div class="callout">
+          Good project takeaway: intercalation is thermodynamically desired, but kinetics can locally favor lithium metal deposition if lithium arrives faster than graphite can absorb and diffuse it.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    const state = {
+      crate: 2.0,
+      temp: 298,
+      radius: 5.9,
+      diffFactor: 1.0,
+      soc: 25,
+      playing: true,
+      t: 0
+    };
+
+    const controls = ["crate", "temp", "radius", "diffFactor", "soc"];
+    controls.forEach(id => $(id).addEventListener("input", () => {
+      state.crate = parseFloat($("crate").value);
+      state.temp = parseFloat($("temp").value);
+      state.radius = parseFloat($("radius").value);
+      state.diffFactor = parseFloat($("diffFactor").value);
+      state.soc = parseFloat($("soc").value);
+      document.querySelectorAll(".pill").forEach(p => p.classList.remove("active"));
+      updateAll();
+    }));
+
+    document.querySelectorAll(".pill").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const preset = btn.dataset.set;
+        if (preset === "gentle") setControls({crate: 0.8, temp: 305, radius: 4.5, diffFactor: 2.0, soc: 20});
+        if (preset === "baseline") setControls({crate: 2.0, temp: 298, radius: 5.9, diffFactor: 1.0, soc: 25});
+        if (preset === "aggressive") setControls({crate: 5.0, temp: 273, radius: 9.0, diffFactor: 0.5, soc: 55});
+        document.querySelectorAll(".pill").forEach(p => p.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+
+    function setControls(next) {
+      for (const [k,v] of Object.entries(next)) {
+        state[k] = v;
+        const el = $(k === "diffFactor" ? "diffFactor" : k);
+        if (el) el.value = v;
+      }
+      updateAll();
+    }
+
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".scene").forEach(s => s.classList.remove("active"));
+        tab.classList.add("active");
+        $(tab.dataset.tab).classList.add("active");
+        updateAll();
+      });
+    });
+
+    $("playBtn").addEventListener("click", () => {
+      state.playing = !state.playing;
+      $("playBtn").textContent = state.playing ? "Pause animation" : "Play animation";
+    });
+
+    function model() {
+      const Dbase = 1.74e-15;
+      const activation = Math.exp(4200 * (1/298 - 1/state.temp));
+      const Deff = Dbase * state.diffFactor * activation;
+      const R = state.radius * 1e-6;
+      const tauSec = R * R / Deff;
+      const tauHours = tauSec / 3600;
+      const chargeTimeHours = 1 / Math.max(state.crate, 0.01);
+      const kineticRatio = tauHours / chargeTimeHours;
+      const initial = state.soc / 100;
+      const buildup = 0.10 + 0.18 * Math.log1p(kineticRatio) + 0.035 * state.crate + 0.35 * initial;
+      const surf = clamp(initial + buildup, initial, 1.18);
+      const avg = clamp(initial + 0.18 * state.crate, 0, 0.98);
+      const center = clamp(avg - 0.22 * Math.log1p(kineticRatio), 0.02, avg);
+      const risk = clamp((surf - 0.72) / 0.33 + 0.08 * (state.crate - 2), 0, 1.2);
+      return { Deff, tauHours, chargeTimeHours, kineticRatio, surf, avg, center, risk };
+    }
+
+    function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
+
+    function updateLabels() {
+      const m = model();
+      $("crateVal").textContent = `${state.crate.toFixed(1)} C`;
+      $("tempVal").textContent = `${state.temp.toFixed(0)} K`;
+      $("radiusVal").textContent = `${state.radius.toFixed(1)} μm`;
+      $("diffVal").textContent = `${state.diffFactor.toFixed(1)}×`;
+      $("socVal").textContent = `${state.soc.toFixed(0)}%`;
+
+      const regime = m.risk < 0.35 ? "Intercalation-dominated" : m.risk < 0.75 ? "Transition / watch" : "Plating-prone";
+      $("regimeText").textContent = regime;
+      $("mapText").textContent = regime;
+      $("gradientText").textContent = m.surf - m.center < 0.25 ? "Small" : m.surf - m.center < 0.45 ? "Moderate" : "Large";
+
+      $("surfMetric").textContent = `${Math.round(100 * Math.min(m.surf, 1))}%`;
+      $("avgMetric").textContent = `${Math.round(100 * m.avg)}%`;
+      $("tauMetric").textContent = `${m.tauHours < 10 ? m.tauHours.toFixed(1) : m.tauHours.toFixed(0)} h`;
+      $("riskMetric").textContent = `${m.risk.toFixed(2)}`;
+      $("csurfMetric").textContent = `${Math.min(m.surf, 1).toFixed(2)}`;
+      $("cavgMetric").textContent = `${m.avg.toFixed(2)}`;
+      $("gradMetric").textContent = `${Math.max(0, m.surf - m.center).toFixed(2)}`;
+      $("fluxMetric").textContent = `${state.crate.toFixed(1)}`;
+
+      const conclusion = m.risk < 0.35
+        ? "Intercalation is favored. Lithium can diffuse inward fast enough compared with the applied flux."
+        : m.risk < 0.75
+          ? "This is a transition region. The graphite surface is building up lithium, so plating risk is becoming important."
+          : "Plating-prone condition. Lithium arrives faster than it can be transported into the particle interior.";
+      $("mainConclusion").textContent = conclusion;
+    }
+
+    function updateAll() {
+      updateLabels();
+      drawParticle();
+      drawProfile();
+      drawMap();
+    }
+
+    function clear(ctx, canvas) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function drawParticle() {
+      const canvas = $("particleCanvas");
+      const ctx = canvas.getContext("2d");
+      const m = model();
+      clear(ctx, canvas);
+
+      const cx = 455, cy = 235, R = 138;
+
+      // electrolyte background
+      const grad = ctx.createRadialGradient(cx, cy, 20, cx, cy, 260);
+      grad.addColorStop(0, "rgba(30,41,59,0.30)");
+      grad.addColorStop(1, "rgba(15,23,42,0.95)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // arrows from electrolyte to particle
+      for (let i = 0; i < 28; i++) {
+        const angle = (i / 28) * Math.PI * 2 + state.t * 0.25;
+        const dist = 210 + 30 * Math.sin(state.t + i);
+        const x1 = cx + Math.cos(angle) * dist;
+        const y1 = cy + Math.sin(angle) * dist;
+        const x2 = cx + Math.cos(angle) * (R + 18);
+        const y2 = cy + Math.sin(angle) * (R + 18);
+        ctx.strokeStyle = "rgba(56,189,248,0.18)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+
+      // particle
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, 0, Math.PI * 2);
+      ctx.clip();
+      const pg = ctx.createRadialGradient(cx - 45, cy - 50, 30, cx, cy, R);
+      pg.addColorStop(0, "rgba(100,116,139,0.95)");
+      pg.addColorStop(1, "rgba(30,41,59,0.95)");
+      ctx.fillStyle = pg;
+      ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
+
+      // graphite rings
+      ctx.strokeStyle = "rgba(203,213,225,0.10)";
+      ctx.lineWidth = 1;
+      for (let rr = 28; rr < R; rr += 26) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, rr, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      ctx.strokeStyle = "rgba(226,232,240,0.8)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // intercalated particles inside; more near surface if risk/high gradient
+      const nInside = Math.floor(38 + 70 * m.avg);
+      for (let i = 0; i < nInside; i++) {
+        const a = i * 2.399 + 0.2 * Math.sin(state.t);
+        const bias = 0.58 + 0.38 * clamp(m.surf - m.center, 0, 0.8);
+        const rr = R * Math.pow(((i * 37) % 101) / 101, bias);
+        const x = cx + Math.cos(a) * rr;
+        const y = cy + Math.sin(a) * rr;
+        ctx.fillStyle = "rgba(34,197,94,0.85)";
+        ctx.beginPath();
+        ctx.arc(x, y, 4.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // moving incoming ions
+      const ionCount = Math.floor(18 + state.crate * 8);
+      for (let i = 0; i < ionCount; i++) {
+        const a = i * 2.17 + 0.15 * Math.sin(i);
+        const phase = (state.t * (0.15 + 0.03 * state.crate) + i * 0.061) % 1;
+        const rr = R + 260 * (1 - phase);
+        const x = cx + Math.cos(a) * rr;
+        const y = cy + Math.sin(a) * rr;
+        ctx.fillStyle = "rgba(56,189,248,0.9)";
+        ctx.beginPath();
+        ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // plating dots on surface, controlled by risk
+      const plateCount = Math.floor(3 + 42 * clamp(m.risk, 0, 1));
+      for (let i = 0; i < plateCount; i++) {
+        const a = i * 0.41 + state.t * 0.03;
+        const jitter = 4 * Math.sin(i + state.t);
+        const x = cx + Math.cos(a) * (R + 8 + jitter * 0.2);
+        const y = cy + Math.sin(a) * (R + 8 + jitter * 0.2);
+        ctx.fillStyle = m.risk > 0.5 ? "rgba(251,113,133,0.95)" : "rgba(251,113,133,0.45)";
+        ctx.beginPath();
+        ctx.arc(x, y, 4 + 2 * clamp(m.risk,0,1), 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // labels
+      drawText(ctx, "electrolyte", 55, 48, "#94a3b8", 18, "700");
+      drawText(ctx, "graphite particle", cx - 76, cy + 6, "#e5e7eb", 17, "800");
+      drawText(ctx, "Li⁺ flux", 720, 78, "#7dd3fc", 18, "800");
+      drawText(ctx, "surface", cx + R + 24, cy + 4, "#cbd5e1", 15, "600");
+      drawText(ctx, "plating risk", cx + R + 20, cy + 34, m.risk > 0.55 ? "#fb7185" : "#fda4af", 15, "700");
+    }
+
+    function drawProfile() {
+      const canvas = $("profileCanvas");
+      const ctx = canvas.getContext("2d");
+      const m = model();
+      clear(ctx, canvas);
+      ctx.fillStyle = "rgba(2,6,23,0.55)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const left = 82, right = 842, top = 48, bottom = 390;
+      drawAxes(ctx, left, top, right, bottom, "r / Rₚ", "cₛ / cₛ,max");
+
+      // gridlines
+      ctx.strokeStyle = "rgba(148,163,184,0.12)";
+      ctx.lineWidth = 1;
+      for (let i = 1; i <= 5; i++) {
+        const y = bottom - (i / 5) * (bottom - top);
+        ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(right, y); ctx.stroke();
+        drawText(ctx, (i/5).toFixed(1), 38, y+5, "#94a3b8", 12, "500");
+      }
+      for (let i = 1; i <= 5; i++) {
+        const x = left + (i / 5) * (right - left);
+        ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, bottom); ctx.stroke();
+        drawText(ctx, (i/5).toFixed(1), x-8, bottom+24, "#94a3b8", 12, "500");
+      }
+
+      const points = [];
+      for (let i = 0; i <= 160; i++) {
+        const r = i / 160;
+        const curvature = 1.6 + 1.4 * clamp(m.kineticRatio / 30, 0, 1);
+        const c = clamp(m.center + (m.surf - m.center) * Math.pow(r, curvature), 0, 1.08);
+        const x = left + r * (right - left);
+        const y = bottom - (c / 1.05) * (bottom - top);
+        points.push([x, y]);
+      }
+
+      // fill under curve
+      ctx.beginPath();
+      ctx.moveTo(points[0][0], bottom);
+      points.forEach(p => ctx.lineTo(p[0], p[1]));
+      ctx.lineTo(points[points.length - 1][0], bottom);
+      ctx.closePath();
+      const fill = ctx.createLinearGradient(0, top, 0, bottom);
+      fill.addColorStop(0, "rgba(56,189,248,0.25)");
+      fill.addColorStop(1, "rgba(34,197,94,0.06)");
+      ctx.fillStyle = fill;
+      ctx.fill();
+
+      ctx.strokeStyle = m.risk > 0.7 ? "#fb7185" : m.risk > 0.35 ? "#facc15" : "#22c55e";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      points.forEach((p, idx) => idx ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+      ctx.stroke();
+
+      // plating threshold
+      const thresh = 0.82;
+      const yThresh = bottom - (thresh / 1.05) * (bottom - top);
+      ctx.strokeStyle = "rgba(251,113,133,0.72)";
+      ctx.setLineDash([8, 8]);
+      ctx.beginPath(); ctx.moveTo(left, yThresh); ctx.lineTo(right, yThresh); ctx.stroke();
+      ctx.setLineDash([]);
+      drawText(ctx, "simplified plating threshold", right - 230, yThresh - 10, "#fda4af", 13, "700");
+
+      // marker at surface
+      const sx = right, sy = points[points.length - 1][1];
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath(); ctx.arc(sx, sy, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "#38bdf8"; ctx.lineWidth = 3; ctx.stroke();
+      drawText(ctx, "surface concentration", sx - 160, sy - 18, "#e0f2fe", 13, "800");
+
+      drawText(ctx, "center", left - 8, bottom + 45, "#cbd5e1", 13, "600");
+      drawText(ctx, "surface", right - 35, bottom + 45, "#cbd5e1", 13, "600");
+    }
+
+    function drawMap() {
+      const canvas = $("mapCanvas");
+      const ctx = canvas.getContext("2d");
+      const m = model();
+      clear(ctx, canvas);
+      ctx.fillStyle = "rgba(2,6,23,0.55)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const left = 82, right = 842, top = 44, bottom = 392;
+      drawAxes(ctx, left, top, right, bottom, "Temperature [K]", "C-rate");
+
+      const nx = 90, ny = 50;
+      for (let ix = 0; ix < nx; ix++) {
+        for (let iy = 0; iy < ny; iy++) {
+          const T = 260 + (ix / (nx - 1)) * 70;
+          const C = 0.2 + (1 - iy / (ny - 1)) * 5.8;
+          const old = {...state};
+          state.temp = T;
+          state.crate = C;
+          const risk = model().risk;
+          Object.assign(state, old);
+          let color;
+          if (risk < 0.35) color = "rgba(34,197,94,0.72)";
+          else if (risk < 0.75) color = "rgba(250,204,21,0.72)";
+          else color = "rgba(251,113,133,0.74)";
+          const x = left + (ix / nx) * (right - left);
+          const y = top + (iy / ny) * (bottom - top);
+          ctx.fillStyle = color;
+          ctx.fillRect(x, y, (right-left)/nx + 1, (bottom-top)/ny + 1);
+        }
+      }
+
+      // axes labels and ticks
+      ctx.strokeStyle = "rgba(15,23,42,0.7)";
+      ctx.lineWidth = 2;
+      for (let T = 260; T <= 330; T += 10) {
+        const x = left + ((T - 260) / 70) * (right - left);
+        ctx.beginPath(); ctx.moveTo(x, bottom); ctx.lineTo(x, bottom + 6); ctx.stroke();
+        drawText(ctx, T.toString(), x - 12, bottom + 26, "#cbd5e1", 12, "600");
+      }
+      for (let C = 1; C <= 6; C += 1) {
+        const y = bottom - ((C - 0.2) / 5.8) * (bottom - top);
+        ctx.beginPath(); ctx.moveTo(left - 6, y); ctx.lineTo(left, y); ctx.stroke();
+        drawText(ctx, C.toString(), left - 30, y + 4, "#cbd5e1", 12, "600");
+      }
+
+      // current point
+      const px = left + ((state.temp - 260) / 70) * (right - left);
+      const py = bottom - ((state.crate - 0.2) / 5.8) * (bottom - top);
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath(); ctx.arc(px, py, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "#020617"; ctx.lineWidth = 5; ctx.stroke();
+      ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(px, py, 15 + 4 * Math.sin(state.t * 2), 0, Math.PI * 2); ctx.stroke();
+      drawText(ctx, "current sliders", px + 16, py - 12, "#ffffff", 14, "800");
+
+      drawText(ctx, "cool + fast → plating-prone", left + 16, top + 28, "#ffe4e6", 17, "800");
+      drawText(ctx, "warm + slow → safer intercalation", right - 295, bottom - 24, "#dcfce7", 17, "800");
+    }
+
+    function drawAxes(ctx, left, top, right, bottom, xlabel, ylabel) {
+      ctx.strokeStyle = "rgba(226,232,240,0.75)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(left, top);
+      ctx.lineTo(left, bottom);
+      ctx.lineTo(right, bottom);
+      ctx.stroke();
+      drawText(ctx, xlabel, (left+right)/2 - 55, bottom + 62, "#e5e7eb", 15, "700");
+      ctx.save();
+      ctx.translate(left - 58, (top+bottom)/2 + 45);
+      ctx.rotate(-Math.PI/2);
+      drawText(ctx, ylabel, 0, 0, "#e5e7eb", 15, "700");
+      ctx.restore();
+    }
+
+    function drawText(ctx, text, x, y, color = "white", size = 14, weight = "600") {
+      ctx.fillStyle = color;
+      ctx.font = `${weight} ${size}px Inter, system-ui, sans-serif`;
+      ctx.fillText(text, x, y);
+    }
+
+    function loop() {
+      if (state.playing) state.t += 0.025;
+      drawParticle();
+      const active = document.querySelector(".scene.active")?.id;
+      if (active === "profile") drawProfile();
+      if (active === "map") drawMap();
+      requestAnimationFrame(loop);
+    }
+
+    updateAll();
+    loop();
+  </script>
+</body>
+</html>
